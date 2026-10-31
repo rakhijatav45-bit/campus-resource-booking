@@ -48,7 +48,7 @@ The app uses one small npm dependency for SMTP email; install it with `npm insta
 Prerequisite: Node.js 22.13 or newer (`node -v` to check). Download it free from nodejs.org.
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/rakhijatav45-bit/campus-resource-booking.git
 cd campus-resource-booking
 
 cp .env.example .env
@@ -65,6 +65,8 @@ Demo accounts created by the seed script (synthetic data, password from `SEED_PA
 |---|---|
 | Admin | admin@campus.test |
 | Student | aarav@campus.test, diya@campus.test, rohan@campus.test |
+
+These demo emails are made up, so they cannot receive a reset code. To try Forgot password with a real inbox, create a new account with your own email address.
 
 `npm run seed:reset` wipes the database and seeds it again. `npm run dev` restarts the server on file changes.
 
@@ -153,7 +155,7 @@ Errors share one shape and never include stack traces:
 | 403 | Signed in but not allowed |
 | 404 | Unknown resource or booking |
 | 409 | Overlap, inactive resource, impossible status change |
-| 429 | Too many failed sign-ins |
+| 429 | Too many failed sign-ins or reset attempts |
 
 ## Project structure
 
@@ -185,7 +187,7 @@ Four tables: `users`, `resources`, `bookings` and `password_resets`. The ER diag
 - Signing in on other devices is not cancelled when a password is reset. Existing tokens simply expire after `TOKEN_TTL_HOURS`.
 - The login rate limiter lives in memory, so it resets on restart and is per process.
 - Tokens are stored in `sessionStorage`, so signing in is per browser tab. There is no refresh token.
-- No email or push notifications. Students check My bookings for decisions.
+- Only password reset codes are emailed. Booking decisions are not sent by email or push, so students check My bookings.
 - Deactivating a resource does not cancel its existing bookings. Admins can cancel them one by one.
 - Times are stored in UTC and shown in the browser's local timezone.
 - Admin accounts come only from the seed script or a direct database change. New sign-ups are always students, and there is no screen for promoting a user.
@@ -194,7 +196,7 @@ Four tables: `users`, `resources`, `bookings` and `password_resets`. The ER diag
 
 - Waitlist for taken slots, promoting the next request after a cancellation.
 - Recurring bookings and bulk cancellation when a resource closes.
-- Email notifications through a mock provider.
+- Email notifications when a booking is approved or rejected.
 
 ## Licence
 
