@@ -20,7 +20,7 @@ erDiagram
     PASSWORD_RESETS {
         integer id PK
         integer user_id FK
-        text token_hash UK "SHA-256, never the token"
+        text token_hash UK "keyed hash of the 6-digit code"
         text expires_at
         text used_at
         text created_at
@@ -66,6 +66,18 @@ erDiagram
 | Bookings always point at real users and resources | Foreign keys |
 | No two active bookings overlap on a resource | `BEFORE INSERT` and `BEFORE UPDATE` triggers |
 | History is kept when a resource is retired | Soft delete through `is_active` |
+| Reset codes disappear with their account | `ON DELETE CASCADE` on `password_resets.user_id` |
+
+## Password reset codes
+
+Forgot password uses a six-digit one-time code sent by email. The `password_resets` table keeps one row per request:
+
+- `token_hash` holds a keyed hash of the code, never the code itself, so a copy of the database cannot be used to reset anyone's password. It is `UNIQUE`.
+- `expires_at` is when the code stops working (`RESET_CODE_MINUTES` after it was created, 30 by default).
+- `used_at` is filled in when the code is used, or when a newer request replaces it. A code with `used_at` set is never accepted again.
+- `created_at` records when it was requested.
+
+Attempts at guessing a code are limited by an in-memory rate limiter in the server, not by a column in this table.
 
 ## Why timestamps are text
 
@@ -91,6 +103,7 @@ Cancelled and rejected bookings do not block anything, so a cancelled slot can b
 - `idx_bookings_resource_time` on `(resource_id, start_time, end_time)` for overlap checks and schedules.
 - `idx_bookings_user_time` on `(user_id, start_time)` for "my bookings".
 - `idx_bookings_status` on `(status)` for the admin request queue.
+- `idx_password_resets_user` on `(user_id)` to find a user's reset codes.
 
 ## Sample data
 
