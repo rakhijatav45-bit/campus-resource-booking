@@ -1,0 +1,21 @@
+{
+  "name": "campus-resource-booking",
+  "version": "1.0.0",
+  "description": "REST API and web UI for booking campus rooms, labs and equipment without double-booking.",
+  "type": "module",
+  "private": true,
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "start": "node --disable-warning=ExperimentalWarning src/server.js",
+    "dev": "node --watch --disable-warning=ExperimentalWarning src/server.js",
+    "seed": "node --disable-warning=ExperimentalWarning src/seed.js",
+    "seed:reset": "node --disable-warning=ExperimentalWarning src/seed.js --reset",
+    "test": "node --disable-warning=ExperimentalWarning --test --test-reporter=spec --test-concurrency=1 \"test/**/*.test.js\""
+  },
+  "dependencies": {
+    "nodemailer": "^10.3.1"
+  }
+}

@@ -1,0 +1,106 @@
+### Run these in VS Code with the "REST Client" extension (free).
+### Start the server first (npm run seed && npm start), then send the requests in order.
+
+@host = http://localhost:3000/api
+
+### Health check
+GET {{host}}/health
+
+### Sign in as a student, then paste the token below
+# @name login
+POST {{host}}/auth/login
+Content-Type: application/json
+
+{ "email": "aarav@campus.test", "password": "Demo@12345" }
+
+###
+@token = {{login.response.body.token}}
+
+### Who am I
+GET {{host}}/auth/me
+Authorization: Bearer {{token}}
+
+### Search labs that are free on a given range (change the dates to the future)
+GET {{host}}/resources?type=lab&start=2026-11-10T09:00:00Z&end=2026-11-10T10:00:00Z
+Authorization: Bearer {{token}}
+
+### Create a booking (change the dates to the future)
+# @name booking
+POST {{host}}/bookings
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "resource_id": 2,
+  "start_time": "2026-11-10T09:00:00Z",
+  "end_time": "2026-11-10T10:00:00Z",
+  "purpose": "Group study"
+}
+
+### The same slot again returns 409 booking_conflict
+POST {{host}}/bookings
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "resource_id": 2,
+  "start_time": "2026-11-10T09:30:00Z",
+  "end_time": "2026-11-10T10:30:00Z",
+  "purpose": "Overlapping request"
+}
+
+### Back-to-back slot is allowed
+POST {{host}}/bookings
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "resource_id": 2,
+  "start_time": "2026-11-10T10:00:00Z",
+  "end_time": "2026-11-10T11:00:00Z",
+  "purpose": "Next session"
+}
+
+### My upcoming bookings
+GET {{host}}/bookings?upcoming=true
+Authorization: Bearer {{token}}
+
+### Cancel (repeat it: the second call also returns 200)
+POST {{host}}/bookings/{{booking.response.body.booking.id}}/cancel
+Authorization: Bearer {{token}}
+
+### A student trying an admin action returns 403
+POST {{host}}/bookings/1/approve
+Authorization: Bearer {{token}}
+
+### Sign in as admin
+# @name adminLogin
+POST {{host}}/auth/login
+Content-Type: application/json
+
+{ "email": "admin@campus.test", "password": "Demo@12345" }
+
+###
+@adminToken = {{adminLogin.response.body.token}}
+
+### All pending requests
+GET {{host}}/bookings?scope=all&status=pending
+Authorization: Bearer {{adminToken}}
+
+### Approve one
+POST {{host}}/bookings/2/approve
+Authorization: Bearer {{adminToken}}
+
+### Reject one with a reason
+POST {{host}}/bookings/2/reject
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{ "reason": "Room is reserved for an exam" }
+
+### Add a resource
+POST {{host}}/resources
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{ "name": "Seminar Hall B", "type": "room", "location": "Administrative Block", "capacity": 100, "requires_approval": true }
